@@ -1,20 +1,26 @@
 name: CI
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
 jobs:
-  lint-and-test:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - name: Install deps
-        run: pip install pytest ruff bandit 2>/dev/null || true
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: pip install pytest flake8
       - name: Lint
-        run: ruff check src/ 2>/dev/null || echo "no src/ to lint"
+        run: flake8 src/ --max-line-length=120 --extend-ignore=E203
       - name: Test
-        run: pytest tests/ -v 2>/dev/null || echo "no tests yet"
+        run: pytest src/test_social_media_api.py -v
