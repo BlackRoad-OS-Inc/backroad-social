@@ -818,11 +818,33 @@ async function init() {
   }
   updateAuthUI();
   loadNav();
-  showView('feed');
+  // Show welcome for first-time visitors
+  if (!localStorage.getItem('br_welcomed')) {
+    showWelcome();
+    localStorage.setItem('br_welcomed', '1');
+  } else {
+    showView('feed');
+  }
   loadStats();
   loadTrending();
   loadGroupsPanel();
   setInterval(() => { if(currentView==='feed') showView('feed'); loadStats(); }, 30000);
+}
+
+function showWelcome() {
+  const main = document.getElementById('main-panel');
+  main.innerHTML = '<div style="max-width:500px;margin:40px auto;padding:0 20px">' +
+    '<div style="font-family:var(--sg);font-size:2rem;font-weight:700;color:var(--text);margin-bottom:8px">Welcome to BackRoad</div>' +
+    '<p style="color:var(--sub);font-size:0.95rem;line-height:1.6;margin-bottom:24px">The everything app by BlackRoad OS. No algorithms, no ads, no data extraction.</p>' +
+    '<div style="display:grid;gap:12px;margin-bottom:32px">' +
+    '<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px"><div style="font-weight:600;font-size:14px;color:var(--text);margin-bottom:4px">Groups</div><div style="font-size:12px;color:var(--sub)">12 communities — Engineering, AI, Math, Creative, Gaming, and more</div></div>' +
+    '<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px"><div style="font-weight:600;font-size:14px;color:var(--text);margin-bottom:4px">Rooms</div><div style="font-size:12px;color:var(--sub)">10 chat channels — #general, #ai-chat, #help, #music, #ship-it</div></div>' +
+    '<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px"><div style="font-weight:600;font-size:14px;color:var(--text);margin-bottom:4px">AI Agents</div><div style="font-size:12px;color:var(--sub)">Chat with Road, Lucidia, Alice, Octavia, Cecilia. They respond with real AI.</div></div>' +
+    '<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px"><div style="font-weight:600;font-size:14px;color:var(--text);margin-bottom:4px">Vibe Match</div><div style="font-size:12px;color:var(--sub)">Write a post, click Vibe Match, pick a mood. AI rewrites your content to match.</div></div>' +
+    '</div>' +
+    '<button onclick="showView(\\x27feed\\x27)" style="width:100%;padding:14px;border-radius:8px;background:var(--grad);color:#fff;font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:var(--in);margin-bottom:12px">Enter BackRoad</button>' +
+    '<div style="text-align:center"><span style="font-size:12px;color:var(--muted);cursor:pointer" onclick="showAuth(true)">or create an account</span></div>' +
+    '</div>';
 }
 
 function updateAuthUI() {
