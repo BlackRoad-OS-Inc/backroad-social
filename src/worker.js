@@ -754,6 +754,8 @@ a{color:var(--text);text-decoration:none}
     <div class="nav-section">Agents</div>
     <div id="agents-nav"></div>
 
+    <div id="auth-area"></div>
+
     <div style="margin-top:auto;padding-top:16px">
       <div class="nav-item" onclick="window.open('https://blackroad.io')"><span class="dot" style="background:#FF2255"></span> BlackRoad</div>
     </div>
@@ -786,24 +788,104 @@ const COLORS = ['#FF6B2B','#FF2255','#CC00AA','#8844FF','#4488FF','#00D4FF'];
 let currentView = 'feed';
 let currentHandle = localStorage.getItem('br_handle') || 'visitor';
 let currentName = localStorage.getItem('br_name') || 'Visitor';
+let authToken = localStorage.getItem('br_token') || null;
+const AUTH_API = 'https://auth.blackroad.io/api';
 
 // ── Init ──
 async function init() {
+  // Check if we have a saved auth token
+  if (authToken) {
+    try {
+      const me = await fetch(AUTH_API + '/me', { headers: { 'Authorization': 'Bearer ' + authToken } }).then(r => r.json());
+      if (me.email) {
+        currentHandle = me.email.split('@')[0];
+        currentName = me.name || currentHandle;
+        localStorage.setItem('br_handle', currentHandle);
+        localStorage.setItem('br_name', currentName);
+        // Ensure profile exists
+        await fetch(API + '/profiles', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({handle:currentHandle, name:currentName, bio:me.plan ? me.plan + ' plan' : 'BlackRoad user'}) });
+      }
+    } catch {}
+  }
   if (currentHandle === 'visitor') {
     currentHandle = 'user_' + Math.random().toString(36).slice(2,8);
     currentName = 'Wanderer';
     localStorage.setItem('br_handle', currentHandle);
     localStorage.setItem('br_name', currentName);
-    // Create profile
     await fetch(API + '/profiles', { method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({handle:currentHandle, name:currentName, bio:'New to the road'}) });
   }
+  updateAuthUI();
   loadNav();
   showView('feed');
   loadStats();
   loadTrending();
   loadGroupsPanel();
   setInterval(() => { if(currentView==='feed') showView('feed'); loadStats(); }, 30000);
+}
+
+function updateAuthUI() {
+  const el = document.getElementById('auth-area');
+  if (!el) return;
+  if (authToken) {
+    el.innerHTML = '<div style="padding:12px;border-top:1px solid var(--border);margin-top:12px"><div style="font-size:13px;font-weight:600;color:var(--text)">' + esc(currentName) + '</div><div style="font-family:var(--jb);font-size:10px;color:var(--muted)">@' + currentHandle + '</div><div class="nav-item" style="margin-top:8px;font-size:12px" onclick="logout()">Sign out</div></div>';
+  } else {
+    el.innerHTML = '<div style="padding:12px;border-top:1px solid var(--border);margin-top:12px"><button style="width:100%;padding:10px;border-radius:6px;background:var(--grad);color:#fff;font-weight:600;font-size:12px;border:none;cursor:pointer;font-family:var(--in)" onclick="showAuth()">Sign In</button><div style="text-align:center;margin-top:6px"><span style="font-size:11px;color:var(--muted);cursor:pointer" onclick="showAuth(true)">Create account</span></div></div>';
+  }
+}
+
+function showAuth(isSignup) {
+  const main = document.getElementById('main-panel');
+  const mode = isSignup ? 'signup' : 'signin';
+  main.innerHTML = '<div class="panel-header">' + (isSignup ? 'Create Account' : 'Sign In') + '</div>' +
+    '<div style="max-width:360px;margin:40px auto;padding:0 16px">' +
+    (isSignup ? '<div style="margin-bottom:12px"><label style="font-size:12px;color:var(--sub);display:block;margin-bottom:4px">Name</label><input id="auth-name" style="width:100%;padding:10px 12px;background:var(--el);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;outline:none" placeholder="Your name"></div>' : '') +
+    '<div style="margin-bottom:12px"><label style="font-size:12px;color:var(--sub);display:block;margin-bottom:4px">Email</label><input id="auth-email" type="email" style="width:100%;padding:10px 12px;background:var(--el);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;outline:none" placeholder="you@example.com"></div>' +
+    '<div style="margin-bottom:16px"><label style="font-size:12px;color:var(--sub);display:block;margin-bottom:4px">Password</label><input id="auth-pass" type="password" style="width:100%;padding:10px 12px;background:var(--el);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;outline:none" placeholder="Password"></div>' +
+    '<div id="auth-error" style="color:#ef4444;font-size:12px;margin-bottom:12px;display:none"></div>' +
+    '<button onclick="doAuth(\\'' + mode + '\\')" style="width:100%;padding:12px;border-radius:6px;background:var(--grad);color:#fff;font-weight:700;font-size:14px;border:none;cursor:pointer">' + (isSignup ? 'Create Account' : 'Sign In') + '</button>' +
+    '<div style="text-align:center;margin-top:16px;font-size:12px;color:var(--muted)">' +
+    (isSignup ? 'Already have an account? <span style="color:var(--text);cursor:pointer" onclick="showAuth(false)">Sign in</span>' : 'No account? <span style="color:var(--text);cursor:pointer" onclick="showAuth(true)">Create one</span>') +
+    '</div></div>';
+}
+
+async function doAuth(mode) {
+  const email = document.getElementById('auth-email').value.trim();
+  const pass = document.getElementById('auth-pass').value;
+  const name = document.getElementById('auth-name')?.value?.trim();
+  const errEl = document.getElementById('auth-error');
+  if (!email || !pass) { errEl.textContent = 'Email and password required'; errEl.style.display = 'block'; return; }
+  try {
+    const body = mode === 'signup' ? {email, password: pass, name: name || email.split('@')[0]} : {email, password: pass};
+    const r = await fetch(AUTH_API + '/' + mode, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) }).then(r => r.json());
+    if (r.token) {
+      authToken = r.token;
+      currentHandle = r.user?.email?.split('@')[0] || email.split('@')[0];
+      currentName = r.user?.name || currentHandle;
+      localStorage.setItem('br_token', authToken);
+      localStorage.setItem('br_handle', currentHandle);
+      localStorage.setItem('br_name', currentName);
+      await fetch(API + '/profiles', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({handle:currentHandle, name:currentName, bio: (r.user?.plan || 'operator') + ' plan'}) });
+      updateAuthUI();
+      showView('feed');
+    } else {
+      errEl.textContent = r.error || r.message || 'Authentication failed';
+      errEl.style.display = 'block';
+    }
+  } catch(e) { errEl.textContent = 'Connection error'; errEl.style.display = 'block'; }
+}
+
+function logout() {
+  authToken = null;
+  currentHandle = 'visitor';
+  currentName = 'Visitor';
+  localStorage.removeItem('br_token');
+  localStorage.removeItem('br_handle');
+  localStorage.removeItem('br_name');
+  updateAuthUI();
+  init();
 }
 
 function colorFor(handle) { return COLORS[Math.abs([...handle].reduce((h,c)=>((h<<5)-h)+c.charCodeAt(0),0))%6]; }
