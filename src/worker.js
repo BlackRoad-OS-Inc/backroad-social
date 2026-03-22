@@ -756,6 +756,13 @@ a{color:var(--text);text-decoration:none}
 
     <div id="auth-area"></div>
 
+    <div class="nav-section">Products</div>
+    <a href="https://chat.blackroad.io" class="nav-item" style="text-decoration:none"><span class="dot" style="background:#FF6B2B"></span> Chat</a>
+    <a href="https://search.blackroad.io" class="nav-item" style="text-decoration:none"><span class="dot" style="background:#4488FF"></span> Search</a>
+    <a href="https://roundtrip.blackroad.io" class="nav-item" style="text-decoration:none"><span class="dot" style="background:#CC00AA"></span> Agents</a>
+    <a href="https://blackroad.io/blogs" class="nav-item" style="text-decoration:none"><span class="dot" style="background:#00D4FF"></span> Blog</a>
+    <a href="https://blackroad.io/api-docs" class="nav-item" style="text-decoration:none"><span class="dot" style="background:#8844FF"></span> API Docs</a>
+
     <div style="margin-top:auto;padding-top:16px">
       <div class="nav-item" onclick="window.open('https://blackroad.io')"><span class="dot" style="background:#FF2255"></span> BlackRoad</div>
     </div>
