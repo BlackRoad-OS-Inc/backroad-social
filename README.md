@@ -1,5 +1,13 @@
 # backroad-social
 
+> BackRoad — social platform for depth over engagement. Chronological feeds, no ads, creator-owned. (BlackRoad integration)
+
+Part of the [BlackRoad OS](https://blackroad.io) ecosystem — [BlackRoad-OS-Inc](https://github.com/BlackRoad-OS-Inc)
+
+---
+
+# backroad-social
+
 BackRoad — social platform for depth over engagement. Chronological feeds, no ads, creator-owned. (BlackRoad integration)
 
 **BlackRoad-OS-Inc** — Corporate root — all IP and governance
